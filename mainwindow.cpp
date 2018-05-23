@@ -34,9 +34,6 @@ void MainWindow::init()
 
     func_send_data callback = (func_send_data)&MainWindow::callback_receive;
 
-
-
-
     func_create reader_create = (func_create)lib.resolve("global_init");
     bool isOk = reader_create("../pulley.txt", this, callback);
 
