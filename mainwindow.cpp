@@ -8,34 +8,33 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    reader_start = nullptr;
+    reader_stop = nullptr;
+    reader_cleanup = nullptr;
     init();
 }
 
 MainWindow::~MainWindow()
 {
     if (reader_cleanup)
-    {
         reader_cleanup();
-    }
 
     delete ui;
 }
 
 void MainWindow::init()
 {
-    QLibrary lib("../build-test_task_lib-Desktop_Qt_5_10_1_GCC_64bit-Debug/libtest_task_lib.so");
+    QLibrary lib("../build-test-task-lib-Debug/libtest-task-lib.so");
 
     if (!lib.load())
     {
-        reader_cleanup = nullptr;
         init_error("Ошибка загрузки библиотеки!");
         return;
     }
 
-    func_send_data callback = (func_send_data)&MainWindow::callback_receive;
-
-    func_create reader_create = (func_create)lib.resolve("global_init");
-    bool isOk = reader_create("../pulley.txt", this, callback);
+    fn_init reader_init = (fn_init)lib.resolve("reader_init");
+    bool isOk = reader_init(this, "../pulley.txt");
 
     if (!isOk)
     {
@@ -43,9 +42,15 @@ void MainWindow::init()
         return;
     }
 
-    reader_start = (func_control)lib.resolve("global_start");
-    reader_stop = (func_control)lib.resolve("global_stop");
-    reader_cleanup = (func_control)lib.resolve("global_cleanup");
+    fn_set_callbacks set_callbacks = (fn_set_callbacks)lib.resolve("reader_set_callbacks");
+    fn_send_data sd = (fn_send_data)&MainWindow::callback_receive;
+    fn_finished fn = (fn_finished)&MainWindow::callback_finished;
+    set_callbacks(sd, fn);
+
+    reader_start = (fn_control)lib.resolve("reader_start");
+    reader_stop = (fn_control)lib.resolve("reader_stop");
+    reader_cleanup = (fn_control)lib.resolve("reader_cleanup");
+
     ui->label_info->setText("Программа готова к работе");
 }
 
@@ -70,7 +75,8 @@ void MainWindow::callback_receive(point p)
 
 void MainWindow::callback_finished()
 {
-    init_error("Программа завершила работу");
+    reader_stop();
+    init_error("Потоки завершили работу");
 }
 
 void MainWindow::init_error(const char *message)

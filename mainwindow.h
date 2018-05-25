@@ -28,9 +28,9 @@ private:
     void init_error(const char* message);
 
     Ui::MainWindow* ui;
-    func_control reader_start;
-    func_control reader_stop;
-    func_control reader_cleanup;
+    fn_control reader_start;
+    fn_control reader_stop;
+    fn_control reader_cleanup;
 };
 
 #endif // MAINWINDOW_H
