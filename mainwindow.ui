@@ -25,7 +25,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QGraphicsView" name="graphic"/>
+       <widget class="QwtPlot" name="graphic"/>
       </item>
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout">
@@ -78,6 +78,13 @@
   <widget class="QStatusBar" name="statusBar"/>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>QwtPlot</class>
+   <extends>QGraphicsView</extends>
+   <header>qwt/qwt_plot.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>
