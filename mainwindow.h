@@ -20,16 +20,15 @@ public:
     explicit MainWindow(QWidget* parent = 0);
     ~MainWindow();
 
-    void callback_receive(point p);
-    void callback_finished();
+    void callback_receive(point p); // callback получения точки
 
 private slots:
-    void on_btn_start_clicked();
-    void on_btn_stop_clicked();
-    void draw_point(point p);
+    void on_btn_start_clicked(); // старт процесса
+    void on_btn_stop_clicked(); // стоп процесса
+    void draw_point(point p); // отрисовка точки на графике
 
 signals:
-    void receive_to_draw(point p);
+    void receive_to_draw(point p); // передать координату функции draw_point
 
 private:
     void init();
@@ -40,17 +39,16 @@ private:
     fn_control reader_stop;
     fn_control reader_cleanup;
 
-    reader* readerer;
-    QwtPlotCurve* raw_curve;
-    QwtPlotCurve* flt_curve;
-    QVector<double> x;
-    QVector<double> y;
-    QVector<double> xmedian;
-    QVector<double> ymedian;
-    QVector<double> xwindow;
-    QVector<double> ywindow;
-    QVector<double> window;
-    int window_size;
+    QwtPlotCurve* raw_curve; // обычный график
+    QwtPlotCurve* flt_curve; // график с медианной фильтрацией
+    QVector<double> x; // x-координаты обычного графика
+    QVector<double> y; // y-координаты обычного графика
+    QVector<double> xmedian; // x-координаты фильтрованного графика
+    QVector<double> ymedian; // y-координаты фильтрованного графика
+    QVector<double> xwindow; // окно x-координат
+    QVector<double> ywindow; // окно y-координат
+    QVector<double> window; // окно-буфер для проведения фильтрации
+    int window_size; // размер окна
 };
 
 #endif // MAINWINDOW_H

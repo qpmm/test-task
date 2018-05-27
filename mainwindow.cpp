@@ -37,6 +37,8 @@ MainWindow::~MainWindow()
 
 void MainWindow::init()
 {
+    // Загрузка библиотеки
+
     QLibrary lib("../build-test-task-lib-Debug/libtest-task-lib.so");
 
     if (!lib.load())
@@ -44,6 +46,8 @@ void MainWindow::init()
         init_error("Ошибка загрузки библиотеки!");
         return;
     }
+
+    // Инициализация файла
 
     fn_init reader_init = (fn_init)lib.resolve("reader_init");
     bool isOk = reader_init(this, "../pulley.txt");
@@ -54,19 +58,23 @@ void MainWindow::init()
         return;
     }
 
-    fn_set_callbacks set_callbacks = (fn_set_callbacks)lib.resolve("reader_set_callbacks");
-    fn_send_data sd = (fn_send_data)&MainWindow::callback_receive;
-    fn_finished fn = (fn_finished)&MainWindow::callback_finished;
-    set_callbacks(sd, fn);
+    // Установка callback'ов
+
+    fn_set_callback set_callback = (fn_set_callback)lib.resolve("reader_set_callback");
+    set_callback((fn_send_data)&MainWindow::callback_receive);
 
     reader_start = (fn_control)lib.resolve("reader_start");
     reader_stop = (fn_control)lib.resolve("reader_stop");
     reader_cleanup = (fn_control)lib.resolve("reader_cleanup");
 
+    // Чтение конфига
+
     QFile config("config.txt");
     config.open(QIODevice::ReadWrite);
     window_size = QString(config.readAll()).toInt();
     config.close();
+
+    // Настройка буферов для данных
 
     x.reserve(24000);
     y.reserve(24000);
@@ -98,7 +106,7 @@ void MainWindow::on_btn_stop_clicked()
 
 void MainWindow::draw_point(point p)
 {
-    if (!x.size())
+    if (!x.size()) // если получена первая точка
     {
         xmedian.push_back(p.x);
         ymedian.push_back(p.y);
@@ -107,12 +115,12 @@ void MainWindow::draw_point(point p)
     x.push_back(p.x);
     y.push_back(p.y);
 
-    if (xwindow.size() < window_size)
+    if (xwindow.size() < window_size) // ждем заполнения окна
     {
         xwindow.push_back(p.x);
         ywindow.push_back(p.y);
     }
-    else
+    else // медианная фильтрация
     {
         xwindow.pop_front();
         ywindow.pop_front();
@@ -132,6 +140,8 @@ void MainWindow::draw_point(point p)
         ymedian.push_back(window[i]);
     }
 
+    // Отрисовка каждой UPDATE_RATE точки
+
     if (xmedian.size() % UPDATE_RATE == 0)
     {
         flt_curve->setSamples(xmedian.data(), ymedian.data(), xmedian.size());
@@ -150,11 +160,6 @@ void MainWindow::draw_point(point p)
 void MainWindow::callback_receive(point p)
 {
     emit receive_to_draw(p);
-}
-
-void MainWindow::callback_finished()
-{
-    init_error("Потоки завершили работу");
 }
 
 void MainWindow::init_error(const char *message)
