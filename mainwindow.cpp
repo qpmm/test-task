@@ -16,12 +16,13 @@ MainWindow::MainWindow(QWidget *parent) :
 
     qRegisterMetaType<point>("point");
     connect(this, &MainWindow::receive_to_draw, this, &MainWindow::draw_point);
+    
     raw_curve = new QwtPlotCurve();
     flt_curve = new QwtPlotCurve();
 
     raw_curve->setPen(QPen(Qt::black));
     flt_curve->setPen(QPen(Qt::red));
-
+    
     init();
 }
 
