@@ -2,6 +2,8 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QFile>
+#include <QTextStream>
 #include "test_task_lib_global.h"
 #include <qwt/qwt_plot.h>
 #include <qwt/qwt_plot_curve.h>
@@ -11,6 +13,20 @@
 namespace Ui {
 class MainWindow;
 }
+
+class Logger
+{
+public:
+    Logger();
+    ~Logger();
+
+    void init(QString filename);
+    void log(QString text);
+
+private:
+    QFile output;
+    QTextStream writer;
+};
 
 class MainWindow : public QMainWindow
 {
@@ -49,6 +65,8 @@ private:
     QVector<double> ywindow; // окно y-координат
     QVector<double> window; // окно-буфер для проведения фильтрации
     int window_size; // размер окна
+
+    Logger logger;
 };
 
 #endif // MAINWINDOW_H

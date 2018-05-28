@@ -3,6 +3,30 @@
 #include <QLibrary>
 #include <QFile>
 #include <QMetaType>
+#include <QDateTime>
+
+Logger::Logger()
+{
+}
+
+Logger::~Logger()
+{
+    output.close();
+}
+
+void Logger::init(QString filename)
+{
+    output.setFileName(filename);
+    output.open(QIODevice::Append);
+    writer.setDevice(&output);
+}
+
+void Logger::log(QString text)
+{
+    QString time = QDateTime::currentDateTime().toString("[dd.MM.yyyy hh:mm:ss] ");
+    writer << (time + text);
+    writer.flush();
+}
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -13,14 +37,6 @@ MainWindow::MainWindow(QWidget *parent) :
     reader_start = nullptr;
     reader_stop = nullptr;
     reader_cleanup = nullptr;
-
-    qRegisterMetaType<point>("point");
-    connect(this, &MainWindow::receive_to_draw, this, &MainWindow::draw_point);
-    raw_curve = new QwtPlotCurve();
-    flt_curve = new QwtPlotCurve();
-
-    raw_curve->setPen(QPen(Qt::black));
-    flt_curve->setPen(QPen(Qt::red));
 
     init();
 }
@@ -67,6 +83,9 @@ void MainWindow::init()
     reader_stop = (fn_control)lib.resolve("reader_stop");
     reader_cleanup = (fn_control)lib.resolve("reader_cleanup");
 
+    qRegisterMetaType<point>("point");
+    connect(this, &MainWindow::receive_to_draw, this, &MainWindow::draw_point);
+
     // Чтение конфига
 
     QFile config("config.txt");
@@ -87,6 +106,20 @@ void MainWindow::init()
     xwindow.push_back(0.0);
     ywindow.push_back(0.0);
 
+    // Настройка графика
+
+    raw_curve = new QwtPlotCurve();
+    flt_curve = new QwtPlotCurve();
+
+    raw_curve->setPen(QPen(Qt::black));
+    flt_curve->setPen(QPen(Qt::red));
+
+    // Настройка логгера
+
+    logger.init("log.txt");
+
+    // Наконец-то
+
     ui->label_info->setText("Программа готова к работе");
 }
 
@@ -95,6 +128,7 @@ void MainWindow::on_btn_start_clicked()
     reader_start();
     ui->btn_start->setEnabled(false);
     ui->btn_stop->setEnabled(true);
+    logger.log("Старт обработки");
 }
 
 void MainWindow::on_btn_stop_clicked()
@@ -102,6 +136,7 @@ void MainWindow::on_btn_stop_clicked()
     reader_stop();
     ui->btn_start->setEnabled(true);
     ui->btn_stop->setEnabled(false);
+    logger.log("Остановка обработки");
 }
 
 void MainWindow::draw_point(point p)
@@ -159,7 +194,7 @@ void MainWindow::draw_point(point p)
 
 void MainWindow::callback_receive(point p)
 {
-    emit receive_to_draw(p);
+    emit receive_to_draw(p); // выпустить точку наружу
 }
 
 void MainWindow::init_error(const char *message)
