@@ -2,6 +2,8 @@
 #include "ui_mainwindow.h"
 #include <QLibrary>
 #include <QFile>
+#include <QFileDialog>
+#include <QStandardPaths>
 #include <QMetaType>
 #include <QDateTime>
 
@@ -55,21 +57,28 @@ void MainWindow::init()
 {
     // Загрузка библиотеки
 
+    logger.log("Запуск программы");
+    logger.log("Подключение библиотеки...");
+
     QLibrary lib("../build-test-task-lib-Debug/libtest-task-lib.so");
 
     if (!lib.load())
     {
+        logger.log("Ошибка загрузки библиотеки!");
         init_error("Ошибка загрузки библиотеки!");
         return;
     }
 
     // Инициализация файла
 
+    logger.log("Открытие файла...");
+
     fn_init reader_init = (fn_init)lib.resolve("reader_init");
     bool isOk = reader_init(this, "../pulley.txt");
 
     if (!isOk)
     {
+        logger.log("Ошибка открытия файла!");
         init_error("Ошибка открытия файла!");
         return;
     }
