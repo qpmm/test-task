@@ -2,6 +2,8 @@
 #include "ui_mainwindow.h"
 #include <QLibrary>
 #include <QFile>
+#include <QFileDialog>
+#include <QStandardPaths>
 #include <QMetaType>
 #include <QDateTime>
 
@@ -24,7 +26,7 @@ void Logger::init(QString filename)
 void Logger::log(QString text)
 {
     QString time = QDateTime::currentDateTime().toString("[dd.MM.yyyy hh:mm:ss] ");
-    writer << (time + text);
+    writer << (time + text + "\n");
     writer.flush();
 }
 
@@ -43,6 +45,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+    logger.log("Закрытие программы");
+
     if (reader_cleanup)
         reader_cleanup();
 
@@ -53,12 +57,17 @@ MainWindow::~MainWindow()
 
 void MainWindow::init()
 {
+    logger.init("log.txt");
+
     // Загрузка библиотеки
+
+    logger.log("Запуск программы");
 
     QLibrary lib("../build-test-task-lib-Debug/libtest-task-lib.so");
 
     if (!lib.load())
     {
+        logger.log("Ошибка загрузки библиотеки!");
         init_error("Ошибка загрузки библиотеки!");
         return;
     }
@@ -70,6 +79,7 @@ void MainWindow::init()
 
     if (!isOk)
     {
+        logger.log("Ошибка открытия файла!");
         init_error("Ошибка открытия файла!");
         return;
     }
@@ -93,6 +103,8 @@ void MainWindow::init()
     window_size = QString(config.readAll()).toInt();
     config.close();
 
+    logger.log(QString("Конф. файл считан. Размер окна: %1").arg(window_size));
+
     // Настройка буферов для данных
 
     x.reserve(24000);
@@ -114,29 +126,26 @@ void MainWindow::init()
     raw_curve->setPen(QPen(Qt::black));
     flt_curve->setPen(QPen(Qt::red));
 
-    // Настройка логгера
-
-    logger.init("log.txt");
-
     // Наконец-то
 
+    logger.log("Программа готова к работе");
     ui->label_info->setText("Программа готова к работе");
 }
 
 void MainWindow::on_btn_start_clicked()
 {
+    logger.log("Запуск процесса");
     reader_start();
     ui->btn_start->setEnabled(false);
     ui->btn_stop->setEnabled(true);
-    logger.log("Старт обработки");
 }
 
 void MainWindow::on_btn_stop_clicked()
 {
+    logger.log(QString("Остановка процесса. Получено точек: %1").arg(x.size()));
     reader_stop();
     ui->btn_start->setEnabled(true);
     ui->btn_stop->setEnabled(false);
-    logger.log("Остановка обработки");
 }
 
 void MainWindow::draw_point(point p)
