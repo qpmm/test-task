@@ -26,7 +26,7 @@ void Logger::init(QString filename)
 void Logger::log(QString text)
 {
     QString time = QDateTime::currentDateTime().toString("[dd.MM.yyyy hh:mm:ss] ");
-    writer << (time + text);
+    writer << (time + text + "\n");
     writer.flush();
 }
 
@@ -45,6 +45,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+    logger.log("Закрытие программы");
+
     if (reader_cleanup)
         reader_cleanup();
 
@@ -55,10 +57,11 @@ MainWindow::~MainWindow()
 
 void MainWindow::init()
 {
+    logger.init("log.txt");
+
     // Загрузка библиотеки
 
     logger.log("Запуск программы");
-    logger.log("Подключение библиотеки...");
 
     QLibrary lib("../build-test-task-lib-Debug/libtest-task-lib.so");
 
@@ -70,8 +73,6 @@ void MainWindow::init()
     }
 
     // Инициализация файла
-
-    logger.log("Открытие файла...");
 
     fn_init reader_init = (fn_init)lib.resolve("reader_init");
     bool isOk = reader_init(this, "../pulley.txt");
@@ -102,6 +103,8 @@ void MainWindow::init()
     window_size = QString(config.readAll()).toInt();
     config.close();
 
+    logger.log(QString("Конф. файл считан. Размер окна: %1").arg(window_size));
+
     // Настройка буферов для данных
 
     x.reserve(24000);
@@ -123,29 +126,26 @@ void MainWindow::init()
     raw_curve->setPen(QPen(Qt::black));
     flt_curve->setPen(QPen(Qt::red));
 
-    // Настройка логгера
-
-    logger.init("log.txt");
-
     // Наконец-то
 
+    logger.log("Программа готова к работе");
     ui->label_info->setText("Программа готова к работе");
 }
 
 void MainWindow::on_btn_start_clicked()
 {
+    logger.log("Запуск процесса");
     reader_start();
     ui->btn_start->setEnabled(false);
     ui->btn_stop->setEnabled(true);
-    logger.log("Старт обработки");
 }
 
 void MainWindow::on_btn_stop_clicked()
 {
+    logger.log(QString("Остановка процесса. Получено точек: %1").arg(x.size()));
     reader_stop();
     ui->btn_start->setEnabled(true);
     ui->btn_stop->setEnabled(false);
-    logger.log("Остановка обработки");
 }
 
 void MainWindow::draw_point(point p)
